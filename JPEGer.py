@@ -1,4 +1,3 @@
-import cv2
 from format import *
 import utils
 
@@ -45,6 +44,8 @@ class JPEGer:
         self.COM = []
         # zip data
         self.other_data = b''
+        # bit data
+        self.bit_data = ''
         # other info
         self.width = 0
         self.height = 0
@@ -255,8 +256,8 @@ class JPEGer:
 
     def AnalysisZipData(self, data: bytes):
         # Y_DC, Y_AC | U_DC,U_AC | V_DC,V_AC
-        bit_data = utils.convert_bit_string(data)
-        bit_length = len(bit_data)
+        self.bit_data = utils.convert_bit_string(data)
+        bit_length = len(self.bit_data)
 
         all_block = {0: [], 1: [], 2: []}
         previous = [0, 0, 0]
@@ -270,36 +271,34 @@ class JPEGer:
                     previous = [0, 0, 0]
                     if i % 8 != 0:
                         padding = 8 - i % 8
-                        assert bit_data[i:i + padding] == '1' * padding, 'Invalid padding'
+                        assert self.bit_data[i:i + padding] == '1' * padding, 'Invalid padding'
                         i += padding
                 for k in range(3):
-                    i, block = self.ExtractBlock(bit_data, i,
-                                                 self.huffman_component[k + 1][0],
-                                                 self.huffman_component[k + 1][1],
-                                                 previous[k])
+                    i, block = self.ExtractBlock(i, self.huffman_component[k + 1][0],
+                                                 self.huffman_component[k + 1][1], previous[k])
                     previous[k] = block[0]
                     all_block[k].append(block)
         if i % 8 != 0:
             padding = 8 - i % 8
-            assert bit_data[i:i + padding] == '1' * padding, 'Invalid padding'
+            assert self.bit_data[i:i + padding] == '1' * padding, 'Invalid padding'
             i += padding
         assert i <= bit_length, 'bit data overflow'
         return all_block, i
 
-    def ExtractBlock(self, bit_data: str, offset: int, DC_flag: int, AC_flag: int, previous: int):
+    def ExtractBlock(self, offset: int, DC_flag: int, AC_flag: int, previous: int):
         temp = np.zeros(64, dtype=int)
         """ extract DC """
-        key = JPEGer.ExtractKey(bit_data[offset:], self.huffmanDC[DC_flag])
+        key = JPEGer.ExtractKey(self.bit_data[offset: offset + 0x10], self.huffmanDC[DC_flag])
         offset += len(key)
         DC_length = self.ExtractDC(key, DC_flag)
         assert DC_length <= 11, 'DC coefficient is more than 11!'
-        DC = JPEGer.RestoreValue(bit_data[offset: offset + DC_length])
+        DC = JPEGer.RestoreValue(self.bit_data[offset: offset + DC_length])
         offset += DC_length
         temp[0] = DC + previous
         """ extract  AC """
         i = 1
         while i < 64:
-            key = self.ExtractKey(bit_data[offset:], self.huffmanAC[AC_flag])
+            key = self.ExtractKey(self.bit_data[offset: offset + 0x10], self.huffmanAC[AC_flag])
             offset += len(key)
             zero, AC_length = self.ExtractAC(key, AC_flag)
             assert i + zero <= 64, 'ZRL exceeded 64'
@@ -307,11 +306,10 @@ class JPEGer:
             if AC_length == 0 and zero == 0:
                 break
             else:
-                AC = JPEGer.RestoreValue(bit_data[offset:offset + AC_length])
+                AC = JPEGer.RestoreValue(self.bit_data[offset:offset + AC_length])
                 offset += AC_length
                 temp[i] = AC
             i += 1
-        # temp[15], temp[16] = temp[16], temp[15]
         return offset, temp
 
     @staticmethod
@@ -349,7 +347,7 @@ class JPEGer:
             matrix = block.reshape(8, 8)
             q_res = utils.InverseZZ(matrix) * self.DQT_table[flag]
             # IDCT
-            re_idct = cv2.idct(q_res.astype(np.float))
+            re_idct = utils.idct(q_res)
             re_idct.astype(np.int)
             Block.append(np.round(re_idct).astype(np.int))
         return Block
@@ -357,7 +355,7 @@ class JPEGer:
     def ConvertDCT(self, b: list, flag: int):
         Block = []
         for block in b:
-            dct = cv2.dct(block.astype(np.float))
+            dct = utils.dct(block)
             res = dct / self.DQT_table[flag]
             matrix = np.round(res).astype(np.int)
             vector = utils.ZZEncoder(matrix).flatten()
