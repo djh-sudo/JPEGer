@@ -432,9 +432,9 @@ class JPEGer:
         return stream, data[0]
 
     def HideDCT(self, data: str, p1: int, p2: int, number: int):
-        assert 63 >= p1 > 1 and 63 >= p2 > 1, 'Invalid position'
+        assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         assert len(data) <= (self.height // 8) * (self.width // 8), 'Data is too long'
-        assert 63 >= p1 > 1 and 63 >= p2 > 1, 'Invalid position'
+        assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         for i in range(len(data)):
             self.YCrCb[0][i][63] = 0
             self.YCrCb[0][i][62] = 0
@@ -455,8 +455,8 @@ class JPEGer:
 
     def ExtractFromDCT(self, p1: int, p2: int):
         length = (self.DQT_table[0][6][7] << 8) + (self.DQT_table[0][7][6])
-        assert 63 >= p1 > 1 and 63 >= p2 > 1, 'Invalid position'
-        assert 63 >= p1 > 1 and 63 >= p2 > 1, 'Invalid position'
+        assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
+        assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         res = ''
         for i in range(length):
             if self.YCrCb[0][i][p1] >= self.YCrCb[0][i][p2]:
