@@ -83,3 +83,32 @@ def GetBitFromFile(full_path: str):
             res += bin(it).replace('0b', '').zfill(8)
     f.close()
     return res
+
+
+def dct(X):
+    N = X.shape[0]
+    A = np.zeros((N, N))
+
+    for i in range(N):
+        for j in range(N):
+            if i == 0:
+                a = np.sqrt(1 / N)
+            else:
+                a = np.sqrt(2 / N)
+            A[i, j] = a * np.cos(np.pi * (j + 0.5) * i / N)
+    Y = A.dot(X).dot(A.T)
+    return Y
+
+
+def idct(X):
+    N = X.shape[0]
+    A = np.zeros((N, N))
+    for i in range(N):
+        for j in range(N):
+            if i == 0:
+                a = np.sqrt(1 / N)
+            else:
+                a = np.sqrt(2 / N)
+            A[i, j] = a * np.cos(np.pi * (j + 0.5) * i / N)
+    Y = A.T.dot(X).dot(A)
+    return Y
