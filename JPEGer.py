@@ -362,12 +362,6 @@ class JPEGer:
             Block.append(vector)
         return Block
 
-    def RecoverFromRGB(self):
-        res = {}
-        for key in self.YCrCb:
-            res[key] = self.RecoverIDCT(self.YCrCb[key], self.Q_component[key + 1])
-        return res
-
     def ReverseHuffman(self):
         for it in self.huffmanDC:
             self.re_huffmanDC[it] = {val: key for key, val in self.huffmanDC[it].items()}
@@ -463,62 +457,6 @@ class JPEGer:
                 res += '1'
             else:
                 res += '0'
-        return res
-
-    def HideRGB(self, data: str):
-        assert 0 < len(data) <= (self.height * self.width), 'data is too long!'
-        RGB = self.RecoverFromRGB()
-        R = RGB[0]
-        length = len(data)
-        block_number = length // 64
-        padding_number = length % 64
-        index = 0
-        for i in range(block_number):
-            for k in range(8):
-                for j in range(8):
-                    index = i * 64 + k * 8 + j
-                    if data[index] == '1':
-                        R[i][k][j] |= 0x01
-                    else:
-                        R[i][k][j] &= 0xfe
-        p = 0
-        for k in range(8):
-            for j in range(8):
-                if data[index + p] == '1':
-                    R[block_number][k][j] |= 0x01
-                else:
-                    R[block_number][k][j] &= 0xfe
-                p += 1
-                if p >= padding_number:
-                    self.YCrCb[0] = self.ConvertDCT(R, self.Q_component[1])
-                    return
-        self.YCrCb[0] = self.ConvertDCT(R, self.Q_component[1])
-        return
-
-    def ExtractFromRGB(self, length: int):
-        assert length > 0, 'None hide information'
-        RGB = self.RecoverFromRGB()
-        R = RGB[0]
-        res = ''
-        block_number = length // 64
-        padding_number = length % 64
-        for i in range(block_number):
-            for k in range(8):
-                for j in range(8):
-                    if R[i][k][j] & 0x01 == 1:
-                        res += '1'
-                    else:
-                        res += '0'
-        p = 0
-        for k in range(8):
-            for j in range(8):
-                if R[block_number][k][j] & 0x01 == 1:
-                    res += '1'
-                else:
-                    res += '0'
-                p += 1
-                if p >= padding_number:
-                    return res
         return res
 
     def WriteDQT(self):
