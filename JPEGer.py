@@ -267,7 +267,7 @@ class JPEGer:
         i = 0
         for y in range(0, block_height):
             for x in range(0, block_width):
-                if (y * block_width + x) % rounds == 0:
+                if rounds != 0 and (y * block_width + x) % rounds == 0:
                     previous = [0, 0, 0]
                     if i % 8 != 0:
                         padding = 8 - i % 8
@@ -425,7 +425,7 @@ class JPEGer:
             k += 1
         return stream, data[0]
 
-    def HideDCT(self, data: str, p1: int, p2: int, number: int):
+    def HideDCT(self, data: str, p1: int, p2: int, number: int, once=False):
         assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         assert len(data) <= (self.height // 8) * (self.width // 8), 'Data is too long'
         assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
@@ -443,12 +443,19 @@ class JPEGer:
             else:
                 if self.YCrCb[0][i][p1] > self.YCrCb[0][i][p2]:
                     self.YCrCb[0][i][p1], self.YCrCb[0][i][p2] = self.YCrCb[0][i][p2], self.YCrCb[0][i][p1]
+        if not once:
+            self.DQT_table[0][6][7], self.DQT_table[0][7][6] = len(data) >> 8, len(data) & 0xff
+        else:
+            size = (self.DQT_table[0][6][7] << 8) + (self.DQT_table[0][7][6]) + len(data)
+            self.DQT_table[0][6][7], self.DQT_table[0][7][6] = size >> 8, size & 0xff
 
-        self.DQT_table[0][6][7], self.DQT_table[0][7][6] = len(data) >> 8, len(data) & 0xff
         self.DQT_table[0][7][7] = number
 
-    def ExtractFromDCT(self, p1: int, p2: int):
-        length = (self.DQT_table[0][6][7] << 8) + (self.DQT_table[0][7][6])
+    def ExtractFromDCT(self, p1: int, p2: int, length=None):
+        if not length:
+            length = (self.DQT_table[0][6][7] << 8) + (self.DQT_table[0][7][6])
+        if length <= 0:
+            return ''
         assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         assert 60 >= p1 >= 1 and 60 >= p2 >= 1, 'Invalid position'
         res = ''
