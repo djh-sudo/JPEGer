@@ -466,6 +466,12 @@ class JPEGer:
                 res += '0'
         return res
 
+    def getHideLength(self):
+        return (self.DQT_table[0][6][7] << 8) + (self.DQT_table[0][7][6])
+
+    def getHideNumber(self):
+        return self.DQT_table[0][7][7]
+
     def WriteDQT(self):
         """ modify DQT """
         data = [b'\xff', b'\xdb']
