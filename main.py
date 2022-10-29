@@ -8,7 +8,9 @@ https://github.com/djh-sudo/JPEGer
 if you have any question, pls contact me
 at djh113@126.com
 """
+import argparse
 import os
+import shutil
 import utils
 from JPEGer import JPEGer
 import hashlib
@@ -127,10 +129,35 @@ def pair_extract(p1: int, p2: int, p3: int, p4: int, dir_name: str):
 
 
 def main():
-    single_point(15, 16)
-    single_extract(15, 16, 'pic')
-    # pair_point(15, 16, 21, 22)
-    # pair_extract(15, 16, 21, 22, 'pic')
+    if os.path.exists('pic'):
+        shutil.rmtree('pic')
+        os.mkdir('pic')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-hide1', '--hd1', type=str, help='hide with one pair of point')
+    parser.add_argument('-hide2', '--hd2', type=str, help='hide with two pairs of point')
+    parser.add_argument('-ext1', '--ext1', type=str, help='extract info from one pair')
+    parser.add_argument('-ext2', '--ext2', type=str, help='extract info from two pairs')
+    args = parser.parse_args()
+    # hide
+    h1 = args.hd1
+    h2 = args.hd2
+    # extract
+    ext1 = args.ext1
+    ext2 = args.ext2
+    if h1 or ext1:
+        point = h1.split(',')
+        assert len(point) == 2, 'count of point is invalid'
+        if h1:
+            single_point(int(point[0]), int(point[1]))
+        if ext1:
+            single_extract(int(point[0]), int(point[1]), 'pic')
+    elif h2 or ext2:
+        point = h2.split(',')
+        assert len(point) == 4, 'count of point is invalid'
+        if h2:
+            pair_point(int(point[0]), int(point[1]), int(point[2]), int(point[3]))
+        if ext2:
+            pair_extract(int(point[0]), int(point[1]), int(point[2]), int(point[3]), 'pic')
 
 
 def calc(number):
