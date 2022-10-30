@@ -128,10 +128,13 @@ def pair_extract(p1: int, p2: int, p3: int, p4: int, dir_name: str):
     check('./src/secret.py', './secret.py')
 
 
-def main():
+def clear_dir():
     if os.path.exists('pic'):
         shutil.rmtree('pic')
         os.mkdir('pic')
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-hide1', '--hd1', type=str, help='hide with one pair of point')
     parser.add_argument('-hide2', '--hd2', type=str, help='hide with two pairs of point')
@@ -145,14 +148,20 @@ def main():
     ext1 = args.ext1
     ext2 = args.ext2
     if h1 or ext1:
-        point = h1.split(',')
+        if h1:
+            point = h1.split(',')
+        if ext1:
+            point = ext1.split(',')
         assert len(point) == 2, 'count of point is invalid'
         if h1:
             single_point(int(point[0]), int(point[1]))
         if ext1:
             single_extract(int(point[0]), int(point[1]), 'pic')
     elif h2 or ext2:
-        point = h2.split(',')
+        if h2:
+            point = h2.split(',')
+        if ext2:
+            point = ext2.split(',')
         assert len(point) == 4, 'count of point is invalid'
         if h2:
             pair_point(int(point[0]), int(point[1]), int(point[2]), int(point[3]))
