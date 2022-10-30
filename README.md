@@ -8,12 +8,12 @@
 ## Usage
 可以在一个`MCU`中隐藏`1`个比特，也可以隐藏两个比特，具体命令行参数如下:
 ```python
-python main.py -h1 p1,p2
-python main.py -h2 p1,p2,p3,p4
+python main.py -hide1 p1,p2
+python main.py -hide2 p1,p2,p3,p4
 python main.py -ext1 p1,p2
 python main.py -ext2 p1,p2,p3,p4
 ```
-请配对使用`h1/ext1`和`h2/ext2`,默认存放图片文件夹为`./pic`
+请配对使用`hide1/ext1`和`hide2/ext2`,默认存放图片文件夹为`./pic`
 ## Details
 
 通过`DCT`系数矩阵的两个块系数的相对大小，存储隐藏信息的一个比特分量。
